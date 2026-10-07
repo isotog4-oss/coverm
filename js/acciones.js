@@ -74,6 +74,7 @@ const actions={
   delextra:b=>{Q().extras=Q().extras.filter(e=>e.id!==b.dataset.id);save();render()},
   basis:b=>{Q().basis=b.dataset.b;save();renderResBody()},
   pdf:()=>makePDF(),
+  xlsx:()=>makeXLSX(),
   copy:copySummary,
   example:loadExample,
   export:()=>{

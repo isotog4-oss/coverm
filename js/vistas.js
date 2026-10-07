@@ -199,6 +199,7 @@ function renderResBody(){
    <div class="total-line grand"><span>TOTAL</span><span>${fmt(c.total)}</span></div>
    <div class="row-actions">
      <button class="btn primary" data-act="pdf">Descargar PDF</button>
+     <button class="btn" data-act="xlsx">Descargar Excel</button>
      <button class="btn" data-act="copy">Copiar resumen</button>
    </div></section>`;
   el.innerHTML=h;

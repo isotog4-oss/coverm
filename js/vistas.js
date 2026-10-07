@@ -163,6 +163,7 @@ function renderResBody(){
        <option value="">—</option>
        ${q.suppliers.map(s=>`<option value="${s.id}" ${q.basis===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}
      </select></label>
+   <p class="small" style="margin:12px 0 0"><b>Se va a cotizar:</b> ${esc(c.label)}. El PDF y el Excel solo incluyen esta opción${c.type==='combined'?'':', sin la compra combinada'}.</p>
   </section>`;
 
   h+=`<section class="card"><h2>Comparación de proveedores</h2>

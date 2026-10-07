@@ -132,7 +132,7 @@ function makePDF(){
   }
 
   /* Compra combinada (si hay 2 o más proveedores) */
-  if(q.suppliers.length>=2){
+  if(c.type==='combined'&&q.suppliers.length>=2){
     doc.addPage('letter','portrait');y=M;
     heading('Compra combinada','Comprar cada material con el proveedor que lo tiene más barato ('+ivaTxt+').');
     table({head:[['Material','Cant.','Unidad','Proveedor más barato','P. unitario','Subtotal']],

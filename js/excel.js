@@ -116,7 +116,7 @@ async function buildXLSX(){
   ws.views=[{state:'frozen',xSplit:1,ySplit:1}];
 
   /* ---------- Hoja 4: Compra combinada ---------- */
-  if(q.suppliers.length>=2){
+  if(c.type==='combined'&&q.suppliers.length>=2){
     ws=wb.addWorksheet(sheetName('Compra combinada'));
     ws.columns=[{width:34},{width:10},{width:12},{width:26},{width:16},{width:16}];
     head(ws.addRow(['Material','Cantidad','Unidad','Proveedor más barato','Precio unitario','Subtotal']));

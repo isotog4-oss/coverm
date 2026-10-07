@@ -1,0 +1,28 @@
+/* entrada.css - pasos 1 y 2: materiales, proveedores y precios */
+/* filas de materiales */
+.mrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end;padding:12px 0;border-top:1px solid var(--line)}
+.mrow:first-of-type{border-top:0}
+.mrow .nm{grid-column:1/-1}
+.mrow.add{border-top:0;padding-top:0}
+@media(min-width:760px){
+  .mrow{grid-template-columns:2.6fr 1.5fr 1.2fr .9fr auto}
+  .mrow .nm{grid-column:auto}
+}
+/* proveedores */
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px}
+.chip{flex:0 0 auto;min-height:46px;padding:0 14px;border-radius:23px;border:1px solid #AEB5AC;background:#fff;font:inherit;cursor:pointer;color:var(--ink);text-align:left}
+.chip small{display:block;color:var(--muted);line-height:1.1}
+.chip[aria-pressed="true"]{background:var(--brand);color:#fff;border-color:var(--brand)}
+.chip[aria-pressed="true"] small{color:#D6E0EC}
+.addsup{display:flex;gap:10px}
+.addsup input{flex:1;min-width:0}
+.prow{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.prow .pname{flex:1;min-width:0}
+.prow .pname small{display:block;color:var(--muted)}
+.pin{display:flex;align-items:center;gap:6px}
+.pin input{width:112px;text-align:right}
+.pin .cur{color:var(--muted)}
+.pin .lt{min-width:90px;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+.catname{margin:16px 0 0;font-weight:700;color:var(--brand)}
+.progress{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin:8px 0 4px}
+.progress i{display:block;height:100%;background:var(--brand)}

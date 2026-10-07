@@ -1,0 +1,53 @@
+/* base.css - colores, tipografía, encabezado, pestañas, formularios y botones. Cambia aquí los colores (variables :root). */
+:root{
+  --paper:#F3F4F1; --card:#fff; --ink:#1C2733; --muted:#5B6672; --line:#D8DCD5;
+  --brand:#1F3B5C; --danger:#A32018;
+  --g-bg:#CBEBD2; --g-fg:#14532D;
+  --y-bg:#FAEFAE; --y-fg:#5C4700;
+  --o-bg:#FFD6A8; --o-fg:#7A3600;
+  --r-bg:#F7C2BD; --r-fg:#85180F;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.45 'Atkinson Hyperlegible',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:0 14px}
+main.wrap{padding-bottom:80px;padding-top:16px}
+header.top{background:var(--brand);color:#fff;padding:12px 0}
+header.top .wrap{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.logo{font-weight:700;font-size:1.2rem;margin-right:auto}
+header select{min-height:44px;border-radius:8px;border:0;padding:0 10px;font:inherit;max-width:100%;min-width:0;flex:1 1 180px}
+header .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
+.tabs{position:sticky;top:0;z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+.tabs .wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding-top:8px;padding-bottom:8px}
+.tab{min-height:48px;border:1px solid var(--line);background:#fff;border-radius:8px;font:inherit;font-weight:700;cursor:pointer;color:var(--ink)}
+.tab b{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--line);margin-right:6px;font-size:.85rem}
+.tab[aria-current="true"]{background:var(--brand);color:#fff;border-color:var(--brand)}
+.tab[aria-current="true"] b{background:#fff;color:var(--brand)}
+h1,h2,h3{line-height:1.2;margin:0 0 10px}
+h2{font-size:1.2rem}
+h3{font-size:1.05rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+details.card>summary{font-weight:700;cursor:pointer;min-height:32px}
+.muted{color:var(--muted)}
+small,.small{font-size:.88rem}
+label{display:block;font-size:.9rem;color:var(--muted)}
+label input,label select,label textarea{display:block;width:100%;margin-top:4px;color:var(--ink)}
+input,select,textarea{font:inherit;min-height:46px;padding:8px 10px;border:1px solid #AEB5AC;border-radius:8px;background:#fff}
+textarea{width:100%}
+input[type=checkbox]{min-height:0;width:22px;height:22px;display:inline-block;margin:0 8px 0 0;vertical-align:middle}
+label.check{display:flex;align-items:center;color:var(--ink);font-size:1rem;padding-top:18px}
+:focus-visible{outline:3px solid #2F6FEB;outline-offset:2px}
+.btn{min-height:46px;padding:0 16px;border-radius:8px;border:1px solid #AEB5AC;background:#fff;font:inherit;font-weight:700;cursor:pointer;color:var(--ink)}
+.btn.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+.btn.danger{color:var(--danger);border-color:#E3B3AF}
+.btn.small{min-height:38px;padding:0 12px;font-size:.9rem}
+.row-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.grid2{display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px}
+.grid2 .full{grid-column:1/-1}
+@media(min-width:700px){.grid2{grid-template-columns:1fr 1fr}}
+
+/* Pantallas grandes: más espacio */
+@media(min-width:1100px){
+  .wrap{max-width:1180px}
+  body{font-size:18px}
+}

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1F3B5C">
+<title>Cotizador de materiales</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/entrada.css">
+<link rel="stylesheet" href="css/resultado.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="logo">Cotizador</div>
+    <select id="qsel" aria-label="Elegir cotización"></select>
+    <button class="btn" data-act="newq">+ Nueva</button>
+    <button class="btn" data-act="menu" aria-label="Más opciones">Más</button>
+  </div>
+</header>
+<nav class="tabs" aria-label="Pasos">
+  <div class="wrap">
+    <button class="tab" data-act="step" data-step="1"><b>1</b>Materiales</button>
+    <button class="tab" data-act="step" data-step="2"><b>2</b>Precios</button>
+    <button class="tab" data-act="step" data-step="3"><b>3</b>Resultado</button>
+  </div>
+</nav>
+<main class="wrap" id="view"></main>
+<footer>Tus datos se guardan solo en este navegador. Descarga el PDF o un respaldo para no perderlos.</footer>
+
+<dialog id="menu">
+  <h2>Más opciones</h2>
+  <label>Nombre de tu empresa (sale en el PDF)
+    <input data-co="company" id="coName" placeholder="Ej. Instalaciones Soto">
+  </label>
+  <button class="btn" data-act="example">Cargar una cotización de ejemplo</button>
+  <button class="btn" data-act="export">Descargar respaldo de todo</button>
+  <button class="btn" data-act="import">Restaurar un respaldo</button>
+  <button class="btn danger" data-act="wipe">Borrar todos los datos</button>
+  <button class="btn primary" data-act="closemenu">Cerrar</button>
+  <input type="file" id="importFile" accept="application/json,.json" hidden>
+</dialog>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/estado.js"></script>
+<script src="js/calculos.js"></script>
+<script src="js/vistas.js"></script>
+<script src="js/acciones.js"></script>
+<script src="js/pdf.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

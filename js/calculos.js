@@ -12,7 +12,15 @@ function tier(v,all){
 }
 function priceOf(it,sid){const p=it.prices[sid];return(p===undefined||p===null||p==='')?null:+p}
 
+// La cantidad de un material usado en renglones es la suma de lo que lleva cada renglón
+function syncQty(q){
+  const sum={};
+  q.renglones.forEach(g=>g.lines.forEach(l=>{sum[l.itemId]=(sum[l.itemId]||0)+(+l.qty||0)}));
+  q.items.forEach(it=>{if(sum[it.id]!==undefined)it.qty=sum[it.id]});
+}
+
 function compute(q){
+  syncQty(q);
   const items=q.items,sups=q.suppliers,r=(+q.iva||0)/100;
   const stats=sups.map(s=>{
     let gross=0,priced=0;
@@ -56,8 +64,23 @@ function compute(q){
   });
   let exNet=0,exTax=0;
   q.extras.forEach(e=>{const a=+e.amount||0;exNet+=a;if(e.iva)exTax+=a});
-  const subtotal=matNet+exNet;
-  const ivaAmt=r*(matNet+exTax);
+  // Renglones: costo = materiales (precio de la opción elegida, sin IVA) + mano de obra
+  const ind=(+q.indirect||0)/100;
+  const unit={};
+  lines.forEach(l=>{if(l.p!==null)unit[l.it.id]=q.incl?l.p/(1+r):l.p});
+  let rgMiss=0,laborRg=0;
+  const rg=q.renglones.map(g=>{
+    let mat=0;
+    g.lines.forEach(l=>{const u=unit[l.itemId];if(u===undefined)rgMiss++;else mat+=Math.round((+l.qty||0)*u*100)/100});
+    const lab=g.labor.reduce((a,x)=>a+(+x.amount||0),0);
+    laborRg+=lab;
+    const cost=mat+lab,qty=+g.qty||1;
+    return {g,mat,lab,cost,pu:cost/qty,totInd:cost*(1+ind),totIva:cost*(1+ind)*(1+r)};
+  });
+  const base=matNet+laborRg+exNet;
+  const indAmt=base*ind;
+  const subtotal=base+indAmt;
+  const ivaAmt=r*(matNet+laborRg+exTax)*(1+ind);
   const total=subtotal+ivaAmt;
-  return {stats,complete,best,comb,cGross,cMissing,type,sid,label,fallback,lines,matGross,matNet,missing,cat,exNet,subtotal,ivaAmt,total,r};
+  return {rg,rgMiss,laborRg,indAmt,stats,complete,best,comb,cGross,cMissing,type,sid,label,fallback,lines,matGross,matNet,missing,cat,exNet,subtotal,ivaAmt,total,r};
 }

@@ -5,8 +5,8 @@ function render(){
   const sel=$('#qsel');
   sel.innerHTML=S.quotes.map(q=>`<option value="${q.id}" ${q.id===S.current?'selected':''}>${esc(q.name||'Sin nombre')}</option>`).join('');
   document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-current',String(+t.dataset.step===ui.step)));
-  $('#view').innerHTML=ui.step===1?viewMateriales():ui.step===2?viewPrecios():viewResultado();
-  if(ui.step===3)renderResBody();
+  $('#view').innerHTML=ui.step===1?viewMateriales():ui.step===2?viewPrecios():ui.step===3?viewRenglones():viewResultado();
+  if(ui.step===4)renderResBody();
 }
 function setStep(n){ui.step=n;render();window.scrollTo(0,0)}
 
@@ -27,8 +27,10 @@ function dupQuote(){
   const map={};
   c.id=uid();c.name=q.name+' (copia)';
   c.suppliers.forEach(s=>{const n=uid();map[s.id]=n;s.id=n});
-  c.items.forEach(it=>{it.id=uid();const p={};Object.keys(it.prices).forEach(k=>{if(map[k])p[map[k]]=it.prices[k]});it.prices=p});
+  const imap={};
+  c.items.forEach(it=>{const oi=it.id;it.id=uid();imap[oi]=it.id;const p={};Object.keys(it.prices).forEach(k=>{if(map[k])p[map[k]]=it.prices[k]});it.prices=p});
   c.extras.forEach(e=>e.id=uid());
+  c.renglones.forEach(g=>{g.id=uid();g.lines.forEach(l=>{l.id=uid();l.itemId=imap[l.itemId]});g.labor.forEach(x=>x.id=uid())});
   if(map[c.basis])c.basis=map[c.basis];
   S.quotes.push(c);S.current=c.id;ui.supId=null;save();render();toast('Cotización duplicada');
 }
@@ -59,7 +61,20 @@ const actions={
     S.current=S.quotes[0].id;ui.supId=null;save();render();
   },
   additem:addItem,
-  delitem:b=>{Q().items=Q().items.filter(i=>i.id!==b.dataset.id);save();render()},
+  delitem:b=>{Q().items=Q().items.filter(i=>i.id!==b.dataset.id);Q().renglones.forEach(g=>g.lines=g.lines.filter(l=>l.itemId!==b.dataset.id));save();render()},
+  addreng:()=>{const q=Q();q.renglones.push({id:uid(),name:'Renglón '+(q.renglones.length+1),desc:'',qty:1,unit:'global',lines:[],labor:[]});save();render()},
+  delreng:b=>{if(!confirm('¿Eliminar este renglón?'))return;Q().renglones=Q().renglones.filter(g=>g.id!==b.dataset.rg);save();render()},
+  addline:b=>{
+    const q=Q(),g=q.renglones.find(x=>x.id===b.dataset.rg);if(!g)return;
+    const a=ui.add[g.id]||{itemId:q.items[0].id,qty:1};
+    if(!(a.qty>0)){toast('La cantidad debe ser mayor que 0');return}
+    const ex=g.lines.find(l=>l.itemId===a.itemId);
+    if(ex)ex.qty=(+ex.qty||0)+a.qty;else g.lines.push({id:uid(),itemId:a.itemId,qty:a.qty});
+    save();render();
+  },
+  delline:b=>{const g=Q().renglones.find(x=>x.id===b.dataset.rg);if(g){g.lines=g.lines.filter(l=>l.id!==b.dataset.id);save();render()}},
+  addlab:b=>{const g=Q().renglones.find(x=>x.id===b.dataset.rg);if(g){g.labor.push({id:uid(),desc:'Mano de obra',amount:0});save();render()}},
+  dellab:b=>{const g=Q().renglones.find(x=>x.id===b.dataset.rg);if(g){g.labor=g.labor.filter(x=>x.id!==b.dataset.id);save();render()}},
   addsup:addSupplier,
   picksup:b=>{ui.supId=b.dataset.id;render()},
   delsup:b=>{
@@ -101,8 +116,9 @@ document.addEventListener('input',e=>{
   if(d.co!==undefined){S.company=t.value;save();return}
   if(d.q){
     const f=d.q;
-    q[f]=t.type==='checkbox'?t.checked:(f==='iva'?(num(t.value)||0):t.value);
+    q[f]=t.type==='checkbox'?t.checked:(f==='iva'||f==='indirect'?(num(t.value)||0):t.value);
     save();
+    if(f==='indirect'&&ui.step===4)renderResBody();
     if(f==='name'){const o=$('#qsel').selectedOptions[0];if(o)o.textContent=t.value||'Sin nombre'}
     return;
   }
@@ -114,6 +130,14 @@ document.addEventListener('input',e=>{
       draft[f]=resolveNew(f==='category'?'cat':'unit',list,prev);save();render();return;
     }
     draft[f]=f==='qty'?(num(t.value)||0):t.value;return;
+  }
+  if(d.rg){
+    const g=q.renglones.find(x=>x.id===d.rg);if(!g)return;
+    if(d.addsel!==undefined){ui.add[g.id]=Object.assign({qty:1},ui.add[g.id],{itemId:t.value});return}
+    if(d.addqty!==undefined){ui.add[g.id]=Object.assign({itemId:q.items[0].id},ui.add[g.id],{qty:num(t.value)||0});return}
+    if(d.line){const l=g.lines.find(x=>x.id===d.line);if(l){l.qty=num(t.value)||0;save()}return}
+    if(d.lab){const x=g.labor.find(y=>y.id===d.lab);if(x){x[d.f]=d.f==='amount'?(num(t.value)||0):t.value;save()}return}
+    g[d.f]=d.f==='qty'?(num(t.value)||0):t.value;save();return;
   }
   if(d.item){
     const it=q.items.find(i=>i.id===d.item);if(!it)return;
@@ -175,7 +199,7 @@ $('#importFile').addEventListener('change',e=>{
       if(!s||!Array.isArray(s.quotes)||!s.quotes.length)throw 0;
       s.categories=s.categories||DEF_CATS.slice();s.units=s.units||DEF_UNITS.slice();
       if(!s.quotes.some(q=>q.id===s.current))s.current=s.quotes[0].id;
-      S=s;ui.supId=null;ui.step=1;save();$('#menu').close();render();toast('Respaldo restaurado');
+      s.quotes.forEach(fixQuote);S=s;ui.supId=null;ui.step=1;save();$('#menu').close();render();toast('Respaldo restaurado');
     }catch(err){toast('Ese archivo no es un respaldo válido')}
   };
   r.readAsText(f);e.target.value='';
@@ -202,8 +226,12 @@ function loadExample(){
     r[4].forEach((p,i)=>{if(p!==null)it.prices[sup[i].id]=p});
     q.items.push(it);
   });
-  q.extras=[{id:uid(),desc:'Mano de obra',amount:1500,iva:true}];
-  S.quotes.push(q);S.current=q.id;ui.supId=null;ui.step=3;
+  const it=q.items,L=(i,qty)=>({id:uid(),itemId:it[i].id,qty});
+  q.renglones=[
+    {id:uid(),name:'Red de tuberías y cajas',desc:'Suministro e instalación de tubería PVC, cajas y cableado.',qty:6,unit:'unidad',lines:[L(0,12),L(1,100),L(2,20),L(3,8),L(5,6)],labor:[{id:uid(),desc:'Mano de obra instalación eléctrica',amount:900}]},
+    {id:uid(),name:'Registros y accesorios',desc:'Suministro e instalación de registros y accesorios.',qty:4,unit:'unidad',lines:[L(0,8),L(1,50),L(2,10),L(4,2),L(5,4)],labor:[{id:uid(),desc:'Mano de obra instalación eléctrica',amount:600}]}];
+  q.extras=[];q.indirect=10;
+  S.quotes.push(q);S.current=q.id;ui.supId=null;ui.step=4;
   save();
   if($('#menu').open)$('#menu').close();
   render();window.scrollTo(0,0);
@@ -223,6 +251,8 @@ function copySummary(){
   L.push('');
   L.push('Materiales (sin IVA): '+fmt(c.matNet));
   q.extras.forEach(e=>L.push(e.desc+': '+fmt(+e.amount||0)));
+  if(c.laborRg)L.push('Mano de obra de renglones: '+fmt(c.laborRg));
+  if(c.indAmt)L.push('Indirectos ('+(+q.indirect||0)+'%): '+fmt(c.indAmt));
   L.push('IVA ('+(+q.iva||0)+'%): '+fmt(c.ivaAmt));
   L.push('TOTAL: '+fmt(c.total));
   const text=L.join('\n');

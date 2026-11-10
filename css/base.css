@@ -18,7 +18,7 @@ header.top .wrap{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 header select{min-height:44px;border-radius:8px;border:0;padding:0 10px;font:inherit;max-width:100%;min-width:0;flex:1 1 180px}
 header .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
 .tabs{position:sticky;top:0;z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
-.tabs .wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding-top:8px;padding-bottom:8px}
+.tabs .wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding-top:8px;padding-bottom:8px}
 .tab{min-height:48px;border:1px solid var(--line);background:#fff;border-radius:8px;font:inherit;font-weight:700;cursor:pointer;color:var(--ink)}
 .tab b{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--line);margin-right:6px;font-size:.85rem}
 .tab[aria-current="true"]{background:var(--brand);color:#fff;border-color:var(--brand)}
@@ -46,6 +46,7 @@ label.check{display:flex;align-items:center;color:var(--ink);font-size:1rem;padd
 .grid2 .full{grid-column:1/-1}
 @media(min-width:700px){.grid2{grid-template-columns:1fr 1fr}}
 
+@media(max-width:560px){.tab{font-size:.82rem;padding:0 2px}.tab b{display:none}}
 /* Pantallas grandes: más espacio */
 @media(min-width:1100px){
   .wrap{max-width:1180px}

@@ -3,7 +3,7 @@
 
 function blankQuote(n){
   return {id:uid(),name:'Cotización '+n,client:'',date:today(),iva:12,incl:true,currency:'Q',notes:'',
-          suppliers:[],items:[],extras:[],basis:'best'};
+          suppliers:[],items:[],extras:[],renglones:[],indirect:0,basis:'best'};
 }
 function defaults(){
   const q=blankQuote(1);
@@ -18,6 +18,7 @@ function load(){
         s.categories=s.categories||DEF_CATS.slice();
         s.units=s.units||DEF_UNITS.slice();
         if(!s.quotes.some(q=>q.id===s.current))s.current=s.quotes[0].id;
+        s.quotes.forEach(fixQuote);
         return s;
       }
     }
@@ -25,7 +26,8 @@ function load(){
   return defaults();
 }
 let S=load();
-const ui={step:1,supId:null};
+const ui={step:1,supId:null,add:{}};
+function fixQuote(q){q.renglones=q.renglones||[];q.renglones.forEach(g=>{g.lines=g.lines||[];g.labor=g.labor||[]});q.indirect=+q.indirect||0;return q}
 const draft={name:'',category:'',unit:'unidad',qty:1};
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 function Q(){return S.quotes.find(q=>q.id===S.current)||S.quotes[0]}

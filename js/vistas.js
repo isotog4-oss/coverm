@@ -10,13 +10,15 @@ function unitOpts(sel){return opts(S.units,sel,'+ Otra unidad…')}
 
 function viewMateriales(){
   const q=Q();
+  syncQty(q);
+  const used=new Set();q.renglones.forEach(g=>g.lines.forEach(l=>used.add(l.itemId)));
   if(!draft.category)draft.category=S.categories[0]||'';
   const rows=q.items.map(it=>`
     <div class="mrow">
       <label class="nm">Material<input data-item="${it.id}" data-f="name" value="${esc(it.name)}"></label>
       <label>Categoría<select data-item="${it.id}" data-f="category">${catOpts(it.category)}</select></label>
       <label>Se compra por<select data-item="${it.id}" data-f="unit">${unitOpts(it.unit)}</select></label>
-      <label>Cantidad<input type="number" min="0" step="any" inputmode="decimal" data-item="${it.id}" data-f="qty" value="${it.qty}"></label>
+      <label>Cantidad${used.has(it.id)?' <small>(suma de renglones)</small>':''}<input type="number" min="0" step="any" inputmode="decimal" data-item="${it.id}" data-f="qty" value="${it.qty}" ${used.has(it.id)?'disabled':''}></label>
       <button class="btn danger small" data-act="delitem" data-id="${it.id}" aria-label="Quitar ${esc(it.name)}">Quitar</button>
     </div>`).join('');
   return `
@@ -94,7 +96,7 @@ function viewPrecios(){
       ${rows}
       <div class="row-actions"><button class="btn danger" data-act="delsup" data-id="${sup.id}">Quitar este proveedor</button></div>
     </section>
-    <button class="btn primary" style="width:100%" data-act="step" data-step="3">Ver resultado</button>`;
+    <button class="btn primary" style="width:100%" data-act="step" data-step="3">Siguiente: armar renglones</button>`;
   }else{
     body=`<div class="card empty"><h2>Agrega tu primer proveedor</h2><p class="muted">Escribe el nombre de una ferretería o tienda donde vas a cotizar.</p></div>`;
   }
@@ -120,6 +122,10 @@ function viewResultado(){
     </div>`).join('');
   return `
   <section class="card">
+    <h2>Indirectos</h2>
+    <label style="max-width:240px">Indirectos (%) sobre el costo<input type="number" min="0" step="any" inputmode="decimal" data-q="indirect" value="${q.indirect}"></label>
+  </section>
+  <section class="card">
     <h2>Mano de obra y otros costos</h2>
     <p class="muted small" style="margin-top:0">Agrega lo que no es material: mano de obra, transporte, herramienta, etc.</p>
     ${exRows}
@@ -143,6 +149,7 @@ function renderResBody(){
 
   let h='';
   if(c.fallback)h+=`<div class="warn">Ningún proveedor tiene precio en todos los materiales, así que se usa la compra combinada. Completa los precios que faltan para comparar proveedores completos.</div>`;
+  if(c.rgMiss>0)h+=`<div class="warn">Hay ${c.rgMiss} material(es) de los renglones sin precio en esta opción.</div>`;
   if(c.missing>0)h+=`<div class="warn">Hay ${c.missing} material(es) sin precio en esta opción. No se están sumando al total.</div>`;
 
   h+=`<section class="card"><h2>¿Qué opción quieres cotizar?</h2>
@@ -186,6 +193,14 @@ function renderResBody(){
    <p class="muted small" style="margin-top:0">Precio por unidad de cada proveedor. Cada fila se compara por separado.</p>
    <div class="scroll"><table class="matrix"><thead><tr><th>Material</th>${th}</tr></thead><tbody>${mrows}</tbody><tfoot><tr><td>Total</td>${mfoot}</tr></tfoot></table></div></section>`;
 
+  if(c.rg.length){
+    const T=k=>c.rg.reduce((a,x)=>a+x[k],0);
+    h+=`<section class="card"><h2>Catálogo por renglón</h2><p class="muted small" style="margin-top:0">${esc(c.label)}. Precio unitario = costo ÷ cantidad.</p>
+    <div class="scroll"><table><thead><tr><th>Renglón</th><th>Cant.</th><th>Unidad</th><th>Costo</th><th>P. unitario</th><th>Con indirectos</th><th>Con IVA</th></tr></thead><tbody>
+    ${c.rg.map((x,i)=>`<tr><td>${i+1}. ${esc(x.g.name)}</td><td>${x.g.qty}</td><td>${esc(x.g.unit)}</td><td>${fmt(x.cost)}</td><td>${fmt(x.pu)}</td><td>${fmt(x.totInd)}</td><td>${fmt(x.totIva)}</td></tr>`).join('')}
+    <tr><td colspan="3"><b>Total</b></td><td><b>${fmt(T('cost'))}</b></td><td></td><td><b>${fmt(T('totInd'))}</b></td><td><b>${fmt(T('totIva'))}</b></td></tr>
+    </tbody></table></div></section>`;
+  }
   const cats=Object.keys(c.cat);
   h+=`<section class="card"><h2>Resumen por categoría</h2><p class="muted small" style="margin-top:0">${esc(c.label)}</p>
    <div class="scroll"><table><thead><tr><th>Categoría</th><th>Materiales</th><th>Subtotal sin IVA</th></tr></thead><tbody>
@@ -194,7 +209,9 @@ function renderResBody(){
 
   h+=`<section class="card"><h2>Total de la cotización</h2>
    <div class="total-line"><span>Materiales (sin IVA)</span><span>${fmt(c.matNet)}</span></div>
+   ${c.laborRg?`<div class="total-line"><span>Mano de obra de renglones</span><span>${fmt(c.laborRg)}</span></div>`:''}
    <div class="total-line"><span>Mano de obra y otros costos</span><span>${fmt(c.exNet)}</span></div>
+   ${c.indAmt?`<div class="total-line"><span>Indirectos (${+q.indirect}%)</span><span>${fmt(c.indAmt)}</span></div>`:''}
    <div class="total-line"><span>Subtotal sin IVA</span><span>${fmt(c.subtotal)}</span></div>
    <div class="total-line"><span>IVA (${+q.iva||0}%)</span><span>${fmt(c.ivaAmt)}</span></div>
    <div class="total-line grand"><span>TOTAL</span><span>${fmt(c.total)}</span></div>
@@ -204,4 +221,39 @@ function renderResBody(){
      <button class="btn" data-act="copy">Copiar resumen</button>
    </div></section>`;
   el.innerHTML=h;
+}
+
+function viewRenglones(){
+  const q=Q();
+  if(!q.items.length)return `<div class="card empty"><h2>Primero agrega materiales y precios</h2><button class="btn primary" data-act="step" data-step="1">Ir a materiales</button></div>`;
+  const num_=(a,b)=>`type="number" min="0" step="any" inputmode="decimal" ${a}="${b}"`;
+  const cards=q.renglones.map((g,n)=>{
+    const add=ui.add[g.id]||{itemId:q.items[0].id,qty:1};
+    const opts=q.items.map(i=>`<option value="${i.id}" ${i.id===add.itemId?'selected':''}>${esc(i.name)} (${esc(i.unit)})</option>`).join('');
+    const lines=g.lines.map(l=>{const it=q.items.find(x=>x.id===l.itemId);if(!it)return '';
+      return `<div class="exrow"><div class="nm"><b>${esc(it.name)}</b><br><small class="muted">${esc(it.category)} · ${esc(it.unit)}</small></div>
+        <label>Cantidad<input type="number" min="0" step="any" inputmode="decimal" data-rg="${g.id}" data-line="${l.id}" value="${l.qty}"></label>
+        <button class="btn danger small" data-act="delline" data-rg="${g.id}" data-id="${l.id}">Quitar</button></div>`}).join('');
+    const lab=g.labor.map(x=>`<div class="exrow"><label class="nm">Concepto<input data-rg="${g.id}" data-lab="${x.id}" data-f="desc" value="${esc(x.desc)}"></label>
+        <label>Monto sin IVA<input type="number" min="0" step="any" inputmode="decimal" data-rg="${g.id}" data-lab="${x.id}" data-f="amount" value="${x.amount}"></label>
+        <button class="btn danger small" data-act="dellab" data-rg="${g.id}" data-id="${x.id}">Quitar</button></div>`).join('');
+    return `<section class="card">
+      <div class="grid2" style="margin-top:0">
+        <label>Renglón ${n+1}<input data-rg="${g.id}" data-f="name" value="${esc(g.name)}" placeholder="Ej. Red de ductos"></label>
+        <div class="grid2" style="margin:0"><label>Cantidad<input type="number" min="0" step="any" inputmode="decimal" data-rg="${g.id}" data-f="qty" value="${g.qty}"></label><label>Unidad<input data-rg="${g.id}" data-f="unit" value="${esc(g.unit)}"></label></div>
+        <label class="full">Descripción (sale en el PDF)<textarea rows="2" data-rg="${g.id}" data-f="desc">${esc(g.desc)}</textarea></label>
+      </div>
+      <h3 style="margin-top:14px">Materiales</h3>${lines||'<p class="muted small">Todavía no hay materiales en este renglón.</p>'}
+      <div class="exrow"><label class="nm">Agregar material<select data-rg="${g.id}" data-addsel>${opts}</select></label>
+        <label>Cantidad<input type="number" min="0" step="any" inputmode="decimal" data-rg="${g.id}" data-addqty value="${add.qty}"></label>
+        <button class="btn small" data-act="addline" data-rg="${g.id}">Agregar</button></div>
+      <h3 style="margin-top:14px">Mano de obra y subcontratos</h3>${lab}
+      <div class="row-actions"><button class="btn small" data-act="addlab" data-rg="${g.id}">+ Mano de obra</button>
+        <button class="btn danger small" data-act="delreng" data-rg="${g.id}">Eliminar renglón</button></div>
+    </section>`}).join('');
+  return `<section class="card"><h2>Renglones</h2>
+    <p class="muted" style="margin-top:0">Un renglón es una partida de la obra (ej. "Red de ductos"). Arma cada uno con materiales de tu lista y su mano de obra. El precio de cada material sale de la opción que elijas en Resultado.</p>
+    <button class="btn primary" data-act="addreng">+ Nuevo renglón</button></section>
+    ${cards}
+    ${q.renglones.length?`<button class="btn primary" style="width:100%" data-act="step" data-step="4">Ver resultado</button>`:''}`;
 }

@@ -49,7 +49,9 @@ async function buildXLSX(){
   ws.addRow([]);
   head(ws.addRow(['Concepto','Monto']));
   const sumRows=[['Materiales (sin IVA)',c.matNet]];
+  if(c.laborRg)sumRows.push(['Mano de obra de renglones',c.laborRg]);
   q.extras.forEach(e=>sumRows.push([e.desc||'Otro costo',+e.amount||0]));
+  if(c.indAmt)sumRows.push(['Indirectos ('+(+q.indirect||0)+'%)',c.indAmt]);
   sumRows.push(['Subtotal sin IVA',c.subtotal],['IVA ('+(+q.iva||0)+'%)',c.ivaAmt]);
   sumRows.forEach(r=>{const row=ws.addRow(r);row.getCell(2).numFmt=money;row.eachCell(x=>x.border=box)});
   const tr=ws.addRow(['TOTAL',c.total]);tr.getCell(2).numFmt=money;bold(tr);
@@ -64,6 +66,21 @@ async function buildXLSX(){
     });
   }
   if(q.notes){ws.addRow([]);ws.addRow(['Notas: '+q.notes])}
+
+  /* ---------- Renglones ---------- */
+  if(c.rg.length){
+    ws=wb.addWorksheet('Renglones');
+    ws.columns=[{width:34},{width:50},{width:10},{width:12},{width:16},{width:16},{width:18},{width:18}];
+    head(ws.addRow(['Renglón','Descripción','Cantidad','Unidad','Costo','Precio unitario','Con indirectos','Con IVA']));
+    c.rg.forEach((x,i)=>{
+      const row=ws.addRow([(i+1)+'. '+x.g.name,x.g.desc||'',+x.g.qty||0,x.g.unit,x.cost,x.pu,x.totInd,x.totIva]);
+      [5,6,7,8].forEach(k=>row.getCell(k).numFmt=money);
+      row.getCell(2).alignment={wrapText:true,vertical:'top'};row.eachCell(z=>z.border=box);
+    });
+    const tr=ws.addRow(['Total','','','',c.rg.reduce((a,x)=>a+x.cost,0),'',c.rg.reduce((a,x)=>a+x.totInd,0),c.rg.reduce((a,x)=>a+x.totIva,0)]);
+    [5,7,8].forEach(k=>tr.getCell(k).numFmt=money);bold(tr);
+    ws.views=[{state:'frozen',ySplit:1}];
+  }
 
   /* ---------- Hoja 2: Detalle de la cotización ---------- */
   ws=wb.addWorksheet(sheetName('Detalle'));

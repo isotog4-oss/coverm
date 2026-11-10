@@ -54,10 +54,21 @@ function makePDF(){
   /* Resumen general */
   heading('Resumen general');
   const sumBody=[['Materiales (sin IVA)',F(c.matNet)]];
+  if(c.laborRg)sumBody.push(['Mano de obra de renglones',F(c.laborRg)]);
   q.extras.forEach(e=>sumBody.push([e.desc||'Otro costo',F(+e.amount||0)]));
+  if(c.indAmt)sumBody.push(['Indirectos ('+(+q.indirect||0)+'%)',F(c.indAmt)]);
   sumBody.push(['Subtotal sin IVA',F(c.subtotal)],['IVA ('+(+q.iva||0)+'%)',F(c.ivaAmt)]);
   table({body:sumBody,foot:[['TOTAL',F(c.total)]],showFoot:'lastPage',
     columnStyles:{1:{halign:'right'}},tableWidth:300});
+
+  /* Catálogo por renglón */
+  if(c.rg.length){
+    heading('Catálogo por renglón','Materiales y mano de obra de cada renglón. Precio unitario = costo / cantidad. Opción: '+c.label);
+    table({head:[['Renglón','Cant.','Unidad','Costo','P. unitario','Con indirectos','Con IVA']],
+      body:c.rg.map((x,i)=>[(i+1)+'. '+x.g.name+(x.g.desc?'\n'+x.g.desc:''),String(x.g.qty),x.g.unit,F(x.cost),F(x.pu),F(x.totInd),F(x.totIva)]),
+      columnStyles:{1:{halign:'right'},3:{halign:'right'},4:{halign:'right'},5:{halign:'right'},6:{halign:'right'}},
+      styles:{font:'helvetica',fontSize:8.5,cellPadding:4,textColor:[28,39,51],lineColor:[216,220,213],lineWidth:.5}});
+  }
 
   /* Resumen por categoría */
   const cats=Object.keys(c.cat);
